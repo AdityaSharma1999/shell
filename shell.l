@@ -22,16 +22,20 @@ void myunputc(int c) {
 
 %%
 
-\n 	{
-		return NEWLINE;
+\n  {
+			return NEWLINE;
 	}
 
-[ \t] 	{
-		/* Discard spaces and tabs */
-     	}	
+[ \t] {
+			/* Discard spaces and tabs */
+   	}	
 
-">" 	{
+">"	{
 		return GREAT;
+	}
+
+"|" { 
+		return PIPE;
 	}
 
 [^ \t\n][^ \t\n]*  {
@@ -39,4 +43,6 @@ void myunputc(int c) {
 		yylval.string_val = strdup(yytext);
 		return WORD;
 	}
+
+
 
