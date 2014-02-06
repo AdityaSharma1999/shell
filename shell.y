@@ -13,7 +13,7 @@
 
 %token	<string_val> WORD
 
-%token 	NOTOKEN GREAT NEWLINE
+%token 	NOTOKEN GREAT PIPE NEWLINE
 
 %union	{
 		char   *string_val;
@@ -55,6 +55,10 @@ command_and_args:
 	command_word arg_list {
 		Command::_currentCommand.
 			insertSimpleCommand( Command::_currentSimpleCommand );
+	} PIPE {
+		printf("   Yacc: found pipe\n");
+	} command_word arg_list {
+	
 	}
 	;
 
