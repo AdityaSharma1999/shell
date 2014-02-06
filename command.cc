@@ -140,11 +140,37 @@ Command::execute()
 
 	// Print contents of Command data structure
 	print();
+	
+	int i = 0;
+	pid_t child;
+	int childStatus; //exit status of child
+	pid_t c; // pid of child returned by wait
 
-	// Add execution here
+	// Execution here
 	// For every simple command fork a new process
+	for ( i = 0; i < _numberOfSimpleCommands; i++ ) {
+		child = fork();
+
+		if (child == 0) { //child process
+			//printf("Child: PID of child = %ld\n", (long) getpid());
+			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
+
+			//if the child process reaches this point, then execvp must have failed
+			fprintf(stderr, "Child process could not do execvp\n");
+			exit(1);
+		} 
+		else { // parent process
+			if (child == (pid_t)(-1)) {
+				fprintf(stderr, "Fork failed\n");
+				exit(1);
+			} 
+			else {
+				c = wait(&childStatus); // wait for child to finish
+				//printf("parent: child %ld exited with status %d\n", (long)c, childStatus);
+			}
+		}
+	}
 	// Setup i/o redirection
-	// and call exec
 
 	// Clear to prepare for next command
 	clear();
