@@ -30,13 +30,11 @@ void myunputc(int c) {
 			/* Discard spaces and tabs */
    	}	
 
-">"	{
-		return GREAT;
-	}
-
-"|" { 
-		return PIPE;
-	}
+">"		{ return GREAT; }
+"<"		{ return LESS; }
+">>"	{ return GREATGREAT; }
+"|" 	{ return PIPE; }
+"&" 	{ return AMPERSAND; }
 
 [^ \t\n][^ \t\n]*  {
 		/* Assume that file names have only alpha chars */
