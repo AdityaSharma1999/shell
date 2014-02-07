@@ -167,7 +167,8 @@ Command::execute()
 
 			//if the child process reaches this point, then execvp must have failed
 			fprintf(stderr, "Child process could not do execvp\n");
-			exit(1);
+			perror("execvp");
+			_exit(1);
 		} 
 		else { // parent process
 			if (child == (pid_t)(-1)) {
