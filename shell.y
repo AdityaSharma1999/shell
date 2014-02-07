@@ -13,7 +13,7 @@
 
 %token	<string_val> WORD
 
-%token 	NOTOKEN GREAT PIPE NEWLINE
+%token 	NOTOKEN NEWLINE GREAT GREATGREAT LESS PIPE AMPERSAND
 
 %union	{
 		char   *string_val;
@@ -43,7 +43,11 @@ command: simple_command
         ;
 
 simple_command:	
-	command_and_args iomodifier_opt NEWLINE {
+	command_and_args PIPE { 
+			printf("   Pipe detected\n");
+		} simple_command {
+	}
+	| command_and_args iomodifier_opt NEWLINE {
 		printf("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
