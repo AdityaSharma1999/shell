@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #include "command.h"
 
@@ -141,17 +142,26 @@ Command::execute()
 	// Print contents of Command data structure
 	print();
 	
-	int i = 0;
+	int i;
 	pid_t child;
 	int childStatus; //exit status of child
 	pid_t c; // pid of child returned by wait
 
 	// Execution here
+
 	// For every simple command fork a new process
 	for ( i = 0; i < _numberOfSimpleCommands; i++ ) {
 		child = fork();
 
 		if (child == 0) { //child process
+			// Setup i/o redirection
+			int fdout;
+			mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // -rw-r-----
+			if (_outFile) {
+				fdout = open(_outFile, O_WRONLY | O_CREAT | O_TRUNC, mode);
+				close(1); //close stdout
+				dup(fdout);
+			}
 			//printf("Child: PID of child = %ld\n", (long) getpid());
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
@@ -170,7 +180,6 @@ Command::execute()
 			}
 		}
 	}
-	// Setup i/o redirection
 
 	// Clear to prepare for next command
 	clear();
