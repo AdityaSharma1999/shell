@@ -13,7 +13,7 @@
 
 %token	<string_val> WORD
 
-%token 	NOTOKEN NEWLINE GREAT GREATGREAT LESS PIPE AMPERSAND
+%token 	NOTOKEN NEWLINE GREAT LESS PIPE AMPERSAND GREATGREAT GREATGREATAMPERSAND GREATAMPERSAND
 
 %union	{
 		char   *string_val;
@@ -43,17 +43,27 @@ command: simple_command
         ;
 
 simple_command:	
-	command_and_args PIPE { 
-			printf("   Pipe detected\n");
-		} simple_command {
-	}
-	| command_and_args iomodifier_opt NEWLINE {
+	pipe_list iomodifier_list background_opt NEWLINE {
 		printf("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
-	| NEWLINE 
+	| NEWLINE { 
+		Command::_currentCommand.clear();
+		Command::_currentCommand.prompt();
+	}
 	| error NEWLINE { yyerrok; }
 	;
+
+pipe_list:
+	pipe_list PIPE command_and_args {
+	 	printf("pipe \n");
+	}
+	| command_and_args{ 
+	 	printf("command \n");
+	}
+
+	;
+
 
 command_and_args:
 	command_word arg_list {
@@ -69,27 +79,47 @@ arg_list:
 
 argument:
 	WORD {
-               printf("   Yacc: insert argument \"%s\"\n", $1);
-
-	       Command::_currentSimpleCommand->insertArgument( $1 );\
+		printf("   Yacc: insert argument \"%s\"\n", $1);
+	    Command::_currentSimpleCommand->insertArgument( $1 );\
 	}
 	;
 
 command_word:
 	WORD {
-               printf("   Yacc: insert command \"%s\"\n", $1);
+		printf("   Yacc: insert command \"%s\"\n", $1);
 	       
-	       Command::_currentSimpleCommand = new SimpleCommand();
-	       Command::_currentSimpleCommand->insertArgument( $1 );
+	    Command::_currentSimpleCommand = new SimpleCommand();
+	    Command::_currentSimpleCommand->insertArgument( $1 );
 	}
 	;
 
-iomodifier_opt:
-	GREAT WORD {
+iomodifier_list:
+	iomodifier_list iomodifier
+	| /* empty */
+	;
+
+iomodifier:
+	GREATGREAT WORD {
+	}
+	| GREAT WORD {
 		printf("   Yacc: insert output \"%s\"\n", $2);
 		Command::_currentCommand._outFile = $2;
 	}
-	| /* can be empty */ 
+	| GREATGREATAMPERSAND WORD {
+	}
+	| GREATAMPERSAND WORD {
+	}
+	| LESS WORD {
+		printf("   Yacc: insert input \"%s\"\n", $2);
+		Command::_currentCommand._inputFile = $2;
+	} 
+	;
+
+background_opt:
+	AMPERSAND {
+		Command::_currentCommand._background = 1;
+	}
+	| /* empty */
 	;
 
 %%
