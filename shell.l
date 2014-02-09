@@ -31,8 +31,10 @@ void myunputc(int c) {
    	}	
 
 ">"		{ return GREAT; }
-"<"		{ return LESS; }
 ">>"	{ return GREATGREAT; }
+">&"	{ return GREATAMPERSAND; }
+">>&"	{ return GREATGREATAMPERSAND; }
+"<"		{ return LESS; }
 "|" 	{ return PIPE; }
 "&" 	{ return AMPERSAND; }
 
