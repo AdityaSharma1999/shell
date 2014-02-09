@@ -163,14 +163,15 @@ Command::execute()
 				dup(fdout);
 			}
 			//printf("Child: PID of child = %ld\n", (long) getpid());
+			/*
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
 			//if the child process reaches this point, then execvp must have failed
 			fprintf(stderr, "Child process could not do execvp\n");
 			perror("execvp");
+			*/
 			_exit(1);
-		} 
-		else { // parent process
+		} else { // parent process
 			if (child == (pid_t)(-1)) {
 				fprintf(stderr, "Fork failed\n");
 				exit(1);
@@ -194,7 +195,7 @@ Command::execute()
 void
 Command::prompt()
 {
-	printf("myshell>");
+	printf("myshell $ ");
 	fflush(stdout);
 }
 
