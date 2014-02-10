@@ -94,9 +94,13 @@ Command:: clear()
 		free( _inputFile );
 	}
 
+	/*
+	// _errFile is always just outFile, so will have been freed already
 	if ( _errFile ) {
 		free( _errFile );
 	}
+	*/
+
 
 	_numberOfSimpleCommands = 0;
 	_outFile = 0;
@@ -143,8 +147,7 @@ Command::execute()
 	// Print contents of Command data structure
 	print();
 	
-
-	//save stdin & stdout
+	//save stdin & stdout & stderr
 	int tempIn = dup(0);
 	int tempOut = dup(1);
 	int tempErr = dup(2);
@@ -183,8 +186,11 @@ Command::execute()
 			fdIn = fdPipe[0];
 		}
 
-		// redirect output
+		// redirect output and error
 		dup2(fdOut, 1);
+
+		if (_errFile) { dup2( fdOut, 2); }
+
 		close(fdOut);
 
 		child = fork();
@@ -202,11 +208,13 @@ Command::execute()
 
 	} // endfor
 
-	// restore in/out defaults
+	// restore in/out/err defaults
 	dup2(tempIn, 0);
 	dup2(tempOut, 1);
+	dup2(tempErr, 2);
 	close(tempIn);
 	close(tempOut);
+	close(tempErr);
 
 	if (!_background) {
 		waitpid(child, NULL, 0);

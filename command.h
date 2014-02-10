@@ -19,10 +19,13 @@ struct Command {
 	int _numberOfAvailableSimpleCommands;
 	int _numberOfSimpleCommands;
 	SimpleCommand ** _simpleCommands;
+
 	char * _outFile;
 	char * _inputFile;
 	char * _errFile;
+
 	int _background;
+	int _openOptions;
 
 	void prompt();
 	void print();

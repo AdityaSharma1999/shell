@@ -22,6 +22,7 @@
 %{
 //#define yylex yylex
 #include <stdio.h>
+#include <fcntl.h> // for open() arguments
 #include "command.h"
 void yyerror(const char * s);
 int yylex();
@@ -55,11 +56,10 @@ simple_command:
 	;
 
 pipe_list:
-	pipe_list PIPE command_and_args {
-	 	printf("pipe \n");
+	pipe_list PIPE {
+	} command_and_args {
 	}
-	| command_and_args{ 
-	 	printf("command \n");
+	| command_and_args { 
 	}
 
 	;
@@ -100,14 +100,32 @@ iomodifier_list:
 
 iomodifier:
 	GREATGREAT WORD {
+		printf("   Yacc: insert output \"%s\"\n", $2);
+
+		// append stdout to file
+		Command::_currentCommand._openOptions = O_WRONLY | O_CREAT;
+		Command::_currentCommand._outFile = $2;
 	}
 	| GREAT WORD {
 		printf("   Yacc: insert output \"%s\"\n", $2);
+
+		// rewrite the file if it already exists
+		Command::_currentCommand._openOptions = O_WRONLY | O_CREAT | O_TRUNC;
 		Command::_currentCommand._outFile = $2;
 	}
 	| GREATGREATAMPERSAND WORD {
+		//redirect stdout and stderr to file and append
+		Command::_currentCommand._openOptions = O_WRONLY | O_CREAT;
+		Command::_currentCommand._outFile = $2;
+		Command::_currentCommand._errFile = $2;
+
 	}
 	| GREATAMPERSAND WORD {
+		//redirect stdout and stderr to file and truncate
+		Command::_currentCommand._openOptions = O_WRONLY | O_CREAT | O_TRUNC;
+		Command::_currentCommand._outFile = $2;
+		Command::_currentCommand._errFile = $2;
+
 	}
 	| LESS WORD {
 		printf("   Yacc: insert input \"%s\"\n", $2);
