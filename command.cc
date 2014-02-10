@@ -147,18 +147,16 @@ Command::execute()
 	// Print contents of Command data structure
 	print();
 	
-	//save stdin & stdout & stderr
+	// save stdin / stdout / stderr
 	int tempIn = dup(0);
 	int tempOut = dup(1);
 	int tempErr = dup(2);
 
-	//set input
+	// set input
 	int fdIn;
-	if (_inputFile) {
-		//open file for reading
+	if (_inputFile) { 	// open file for reading
 		fdIn = open(_inputFile, O_RDONLY); 
-	} else {
-		//use default input
+	} else { 			// use default input
 		fdIn = dup(tempIn);
 	}
 
@@ -166,15 +164,15 @@ Command::execute()
 	int fdOut;
 	pid_t child;
 	for ( i = 0; i < _numberOfSimpleCommands; i++ ) {
-		// redirect input
+		// redirect input and close fdIn since we're done with it
 		dup2(fdIn, 0);
 		close(fdIn);
 		
 		// setup output
 		if (i == _numberOfSimpleCommands - 1) { // last simple command
 			if (_outFile) { //redirect output
-				mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // -rw-r-----
-				fdOut = open(_outFile, _openOptions, mode);
+				mode_t openMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // -rw-r-----
+				fdOut = open(_outFile, _openOptions, openMode);
 			} else { //use default output
 				fdOut = dup(tempOut);
 			}
@@ -186,13 +184,13 @@ Command::execute()
 			fdIn = fdPipe[0];
 		}
 
-		// redirect output and error
-		dup2(fdOut, 1);
-
-		if (_errFile) { dup2( fdOut, 2); }
-
-		close(fdOut);
-
+		
+		dup2(fdOut, 1);  // redirect output
+		if (_errFile) {  // redirect error at same location as output if necessary
+			dup2( fdOut, 2); 
+		}
+		close(fdOut); //close fdOut since we're done with it
+ 
 		child = fork();
 		if (child == 0) { //child process
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
@@ -200,7 +198,6 @@ Command::execute()
 			//if the child process reaches this point, then execvp must have failed
 			perror("execvp");
 			_exit(1);
-
 		} else if (child < 0) {
 			fprintf(stderr, "Fork failed\n");
 			_exit(1);
