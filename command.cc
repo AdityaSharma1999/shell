@@ -58,6 +58,7 @@ Command::Command()
 	_inputFile = 0;
 	_errFile = 0;
 	_background = 0;
+	_openOptions = 0;
 }
 
 void
@@ -142,45 +143,73 @@ Command::execute()
 	// Print contents of Command data structure
 	print();
 	
+
+	//save stdin & stdout
+	int tempIn = dup(0);
+	int tempOut = dup(1);
+	int tempErr = dup(2);
+
+	//set input
+	int fdIn;
+	if (_inputFile) {
+		//open file for reading
+		fdIn = open(_inputFile, O_RDONLY); 
+	} else {
+		//use default input
+		fdIn = dup(tempIn);
+	}
+
 	int i;
+	int fdOut;
 	pid_t child;
-	int childStatus; //exit status of child
-	pid_t c; // pid of child returned by wait
-
-	// Execution here
-
-	// For every simple command fork a new process
 	for ( i = 0; i < _numberOfSimpleCommands; i++ ) {
-		child = fork();
-
-		if (child == 0) { //child process
-			// Setup i/o redirection
-			int fdout;
-			mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // -rw-r-----
-			if (_outFile) {
-				fdout = open(_outFile, O_WRONLY | O_CREAT | O_TRUNC, mode);
-				close(1); //close stdout
-				dup(fdout);
+		// redirect input
+		dup2(fdIn, 0);
+		close(fdIn);
+		
+		// setup output
+		if (i == _numberOfSimpleCommands - 1) { // last simple command
+			if (_outFile) { //redirect output
+				mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // -rw-r-----
+				fdOut = open(_outFile, _openOptions, mode);
+			} else { //use default output
+				fdOut = dup(tempOut);
 			}
-			//printf("Child: PID of child = %ld\n", (long) getpid());
-			/*
+
+	 	} else { // not last simple command, so create a pipe
+			int fdPipe[2];
+			pipe(fdPipe);
+			fdOut = fdPipe[1];
+			fdIn = fdPipe[0];
+		}
+
+		// redirect output
+		dup2(fdOut, 1);
+		close(fdOut);
+
+		child = fork();
+		if (child == 0) { //child process
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
 			//if the child process reaches this point, then execvp must have failed
-			fprintf(stderr, "Child process could not do execvp\n");
 			perror("execvp");
-			*/
 			_exit(1);
-		} else { // parent process
-			if (child == (pid_t)(-1)) {
-				fprintf(stderr, "Fork failed\n");
-				exit(1);
-			} 
-			else {
-				c = wait(&childStatus); // wait for child to finish
-				//printf("parent: child %ld exited with status %d\n", (long)c, childStatus);
-			}
+
+		} else if (child < 0) {
+			fprintf(stderr, "Fork failed\n");
+			_exit(1);
 		}
+
+	} // endfor
+
+	// restore in/out defaults
+	dup2(tempIn, 0);
+	dup2(tempOut, 1);
+	close(tempIn);
+	close(tempOut);
+
+	if (!_background) {
+		waitpid(child, NULL, 0);
 	}
 
 	// Clear to prepare for next command
