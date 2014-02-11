@@ -22,7 +22,8 @@
 %{
 //#define yylex yylex
 #include <stdio.h>
-#include <fcntl.h> // for open() arguments
+#include <fcntl.h> // open() arguments
+#include <string.h> // strcmp
 #include "command.h"
 void yyerror(const char * s);
 int yylex();
@@ -80,7 +81,8 @@ arg_list:
 argument:
 	WORD {
 		printf("   Yacc: insert argument \"%s\"\n", $1);
-	    Command::_currentSimpleCommand->insertArgument( $1 );\
+
+	    Command::_currentSimpleCommand->insertArgument( $1 );
 	}
 	;
 
@@ -88,6 +90,11 @@ command_word:
 	WORD {
 		printf("   Yacc: insert command \"%s\"\n", $1);
 	       
+		// handle "exit"
+		if (strcmp($1, "exit") == 0) { 
+			exit(0);
+		}
+
 	    Command::_currentSimpleCommand = new SimpleCommand();
 	    Command::_currentSimpleCommand->insertArgument( $1 );
 	}
