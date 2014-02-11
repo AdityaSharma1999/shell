@@ -59,6 +59,8 @@ Command::Command()
 	_errFile = 0;
 	_background = 0;
 	_openOptions = 0;
+
+
 }
 
 void
@@ -94,8 +96,7 @@ Command:: clear()
 		free( _inputFile );
 	}
 
-	/*
-	// _errFile is always just outFile, so will have been freed already
+	/* _errFile is always outFile, so will have been freed already
 	if ( _errFile ) {
 		free( _errFile );
 	}
@@ -164,6 +165,7 @@ Command::execute()
 	int fdOut;
 	pid_t child;
 	for ( i = 0; i < _numberOfSimpleCommands; i++ ) {
+
 		// redirect input and close fdIn since we're done with it
 		dup2(fdIn, 0);
 		close(fdIn);
@@ -183,7 +185,6 @@ Command::execute()
 			fdOut = fdPipe[1];
 			fdIn = fdPipe[0];
 		}
-
 		
 		dup2(fdOut, 1);  // redirect output
 		if (_errFile) {  // redirect error at same location as output if necessary
@@ -193,11 +194,14 @@ Command::execute()
  
 		child = fork();
 		if (child == 0) { //child process
+			signal(SIGINT, SIG_DFL); //reset SIGINT for great good
+			
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
-			//if the child process reaches this point, then execvp must have failed
+			//if the child process reaches this point, execvp has failed
 			perror("execvp");
 			_exit(1);
+
 		} else if (child < 0) {
 			fprintf(stderr, "Fork failed\n");
 			_exit(1);
@@ -236,10 +240,28 @@ Command::prompt()
 Command Command::_currentCommand;
 SimpleCommand * Command::_currentSimpleCommand;
 
+
 int yyparse(void);
+
+void sigint_handler(int p) {
+	printf("\n");
+	Command::_currentCommand.clear();
+	Command::_currentCommand.prompt();
+}
 
 main()
 {
+	struct sigaction sa;
+	sa.sa_handler = sigint_handler;
+	sa.sa_flags = SA_RESTART; //restart any interrupted system calls
+	sigemptyset(&sa.sa_mask);
+
+	//set the SIGINT handler
+	if (sigaction(SIGINT, &sa, NULL) == -1) {
+		perror("sigaction");
+		exit(1);
+	}
+
 	Command::_currentCommand.prompt();
 	yyparse();
 }
