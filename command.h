@@ -26,6 +26,7 @@ struct Command {
 
 	int _background;
 	int _openOptions;
+	int _ambiguous;
 
 	void prompt();
 	void print();
