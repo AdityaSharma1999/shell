@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
-#include <signal.h>
+#include <sys/signal.h>
 #include <fcntl.h>
 
 #include "command.h"
@@ -59,8 +59,7 @@ Command::Command()
 	_errFile = 0;
 	_background = 0;
 	_openOptions = 0;
-
-
+	_ambiguous = 0;
 }
 
 void
@@ -108,6 +107,7 @@ Command:: clear()
 	_inputFile = 0;
 	_errFile = 0;
 	_background = 0;
+	_ambiguous = 0;
 }
 
 void
@@ -139,14 +139,19 @@ Command::print()
 void
 Command::execute()
 {
+
 	// Don't do anything if there are no simple commands
 	if ( _numberOfSimpleCommands == 0 ) {
 		prompt();
 		return;
 	}
 
+	if ( _ambiguous != 0 ) {
+		printf("Ambiguous output redirect.\n");
+	}
+
 	// Print contents of Command data structure
-	print();
+	//print();
 	
 	// save stdin / stdout / stderr
 	int tempIn = dup(0);
@@ -243,23 +248,38 @@ SimpleCommand * Command::_currentSimpleCommand;
 
 int yyparse(void);
 
-void sigint_handler(int p) {
+void sigint_handler(int sig) {
 	printf("\n");
 	Command::_currentCommand.clear();
 	Command::_currentCommand.prompt();
 }
 
+void sigchild_handler(int sig) {
+	int status;
+	wait3(&status, 0, NULL);
+	printf("Child process ended status %x\n", status);
+}
+
 main()
 {
-	struct sigaction sa;
-	sa.sa_handler = sigint_handler;
-	sa.sa_flags = SA_RESTART; //restart any interrupted system calls
-	sigemptyset(&sa.sa_mask);
+	struct sigaction sa_int;
+	sa_int.sa_handler = sigint_handler;
+	sa_int.sa_flags = SA_RESTART; //restart any interrupted system calls
+	sigemptyset(&sa_int.sa_mask);
 
 	//set the SIGINT handler
-	if (sigaction(SIGINT, &sa, NULL) == -1) {
-		perror("sigaction");
+	if (sigaction(SIGINT, &sa_int, NULL) == -1) {
+		perror("sigint action");
 		exit(1);
+	}
+
+	struct sigaction sa_child;
+	sa_child.sa_handler = sigchild_handler;
+	sa_child.sa_flags = SA_RESTART;
+	sigemptyset(&sa_child.sa_mask);
+
+	if (sigaction(SIGCHLD, &sa_child, NULL) == -1) {
+		perror ("sig child action");
 	}
 
 	Command::_currentCommand.prompt();
