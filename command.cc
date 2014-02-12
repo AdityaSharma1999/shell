@@ -196,8 +196,19 @@ Command::execute()
 			dup2( fdOut, 2); 
 		}
 		close(fdOut); //close fdOut since we're done with it
- 
-		child = fork();
+
+		//check for special commands
+		if ( !strcmp(_simpleCommands[i]->_arguments[0], "exit") ) { // exit
+			exit(1);
+
+		} else if ( !strcmp(_simpleCommands[i]->_arguments[0], "setenv") ) { // setenv
+	 		setenv(_simpleCommands[i]->_arguments[1], _simpleCommands[i]->_arguments[2], 1);
+			child = 1;
+
+		} else { // else we fork!
+			child = fork();
+		}
+
 		if (child == 0) { //child process
 			signal(SIGINT, SIG_DFL); //reset SIGINT for great good
 			
@@ -209,7 +220,7 @@ Command::execute()
 
 		} else if (child < 0) {
 			fprintf(stderr, "Fork failed\n");
-			_exit(1);
+			exit(1);
 		}
 
 	} // endfor
@@ -244,7 +255,6 @@ Command::prompt()
 
 Command Command::_currentCommand;
 SimpleCommand * Command::_currentSimpleCommand;
-
 
 int yyparse(void);
 
