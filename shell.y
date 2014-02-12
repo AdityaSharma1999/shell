@@ -164,11 +164,6 @@ argument:
 
 command_word:
 	WORD {
-		// handle "exit"
-		if (strcmp($1, "exit") == 0) { 
-			exit(0);
-		}
-
 		//printf("   Yacc: insert command \"%s\"\n", $1);
 
 	    Command::_currentSimpleCommand = new SimpleCommand();
