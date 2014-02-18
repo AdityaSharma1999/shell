@@ -12,6 +12,22 @@ struct SimpleCommand {
 	
 	SimpleCommand();
 	void insertArgument( char * argument );
+
+};
+
+struct ArgCollector {
+	//stores and sorts wildcard expanded arguments
+	int maxArgs;
+	int nArgs;
+	char** argArray;
+
+	ArgCollector();
+
+	void addArg( char* arg );
+	void sortArgs();
+	void clear();
+
+	static ArgCollector _currentCollector;
 };
 
 struct Command {
@@ -37,6 +53,7 @@ struct Command {
 
 	static Command _currentCommand;
 	static SimpleCommand *_currentSimpleCommand;
+	static ArgCollector *_currentArgCollector;
 };
 
 #endif
