@@ -329,7 +329,7 @@ void sigint_handler(int sig) {
 }
 
 void sigchild_handler(int sig) {
-	wait3(0, 0, NULL);
+	while( waitpid(-1, NULL, WNOHANG) > 0); //lol ok this works i guess
 }
 
 int main()
