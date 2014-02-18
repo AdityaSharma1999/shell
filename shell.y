@@ -244,11 +244,11 @@ iomodifier:
 		}
 
 		// append stdout to file
-		Command::_currentCommand._openOptions = O_WRONLY | O_CREAT;
+		Command::_currentCommand._openOptions = O_WRONLY | O_APPEND | O_CREAT;
 		Command::_currentCommand._outFile = $2;
 	}
 	| GREAT WORD {
-		// if we've already set _outfile, we're doing something ambiguous
+		// if we have already set _outfile, we are doing something ambiguous
 		if (Command::_currentCommand._outFile != 0) {
 			Command::_currentCommand._ambiguous = 1;
 		}
@@ -258,14 +258,13 @@ iomodifier:
 		Command::_currentCommand._outFile = $2;
 	}
 	| GREATGREATAMPERSAND WORD {
-
 		// if we've already set _outfile, we're doing something ambiguous
 		if (Command::_currentCommand._outFile != 0) {
 			Command::_currentCommand._ambiguous = 1;
 		}
 
 		//redirect stdout and stderr to file and append
-		Command::_currentCommand._openOptions = O_WRONLY | O_CREAT;
+		Command::_currentCommand._openOptions = O_WRONLY | O_APPEND | O_CREAT;
 		Command::_currentCommand._outFile = $2;
 		Command::_currentCommand._errFile = $2;
 
