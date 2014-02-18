@@ -55,10 +55,6 @@ SimpleCommand::insertArgument( char * argument )
 
 // ******** ArgCollector ********
 
-int compare (const void * a, const void * b) {
-	return strcmp( *(const char**)a, *(const char**)b);
-}
-
 ArgCollector::ArgCollector() {
 	//initialize
 	maxArgs = 5;
@@ -81,16 +77,20 @@ void ArgCollector::addArg( char* arg ){
 	nArgs++;
 }
 
+int compare (const void * a, const void * b) {
+	return strcmp( *(const char**)a, *(const char**)b);
+}
+
 void ArgCollector::sortArgs(){
 	qsort(argArray, nArgs, sizeof(const char *), compare);
 }
 
 void ArgCollector::clear(){
+	//reset everything
 	maxArgs = 5;
 	nArgs = 0;
 
 	free(argArray);
-
 	argArray =  (char**)malloc(maxArgs * sizeof(char*));
 }
 
