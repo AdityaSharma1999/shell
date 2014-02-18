@@ -21,6 +21,11 @@
 #include "command.h"
 #include "trace.h"
 
+extern char **environ;
+
+
+// ******** SimpleCommand ********
+
 SimpleCommand::SimpleCommand()
 {
 	// Creat available space for 5 arguments
@@ -141,13 +146,6 @@ Command:: clear()
 		free( _inputFile );
 	}
 
-	/* _errFile is always outFile, so will have been freed already
-	if ( _errFile ) {
-		free( _errFile );
-	}
-	*/
-
-
 	_numberOfSimpleCommands = 0;
 	_outFile = 0;
 	_inputFile = 0;
@@ -253,6 +251,10 @@ Command::execute()
 			child = 1;
 			continue; //skip the rest of this iteration
 
+		} else if ( !strcmp(_simpleCommands[i]->_arguments[0], "unsetenv") ) { // unsetenv
+			unsetenv(_simpleCommands[i]->_arguments[1]);
+			continue;
+
 		} else { // else we sort the arguments and fork!
 			child = fork();
 		}
@@ -262,17 +264,6 @@ Command::execute()
 		if (child == 0) { //child process
 			signal(SIGINT, SIG_DFL); //reset SIGINT for great good
 
-			/*
-			if ( !strcmp(_simpleCommands[i]->_arguments[0], "printenv") ) {
-				int i;
-				while (environ[i]) {
-					printf("%s\n", environ[i]);
-					i++;
-				}
-				_exit(0);
-			}
-			*/
-			
 			TRACE("exec with %s\n", _simpleCommands[i]->_arguments[1]);
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
