@@ -1,4 +1,3 @@
-
 #ifndef command_h
 #define command_h
 

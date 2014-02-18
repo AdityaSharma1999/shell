@@ -19,6 +19,7 @@
 #include <fcntl.h>
 
 #include "command.h"
+#include "trace.h"
 
 SimpleCommand::SimpleCommand()
 {
@@ -198,20 +199,36 @@ Command::execute()
 		close(fdOut); //close fdOut since we're done with it
 
 		//check for special commands
-		if ( !strcmp(_simpleCommands[i]->_arguments[0], "exit") ) { // exit
+		if ( !strcmp(_simpleCommands[i]->_arguments[0], "exit")  
+		  	 || !strcmp(_simpleCommands[i]->_arguments[0], "quit") ){ // exit
 			exit(1);
 
 		} else if ( !strcmp(_simpleCommands[i]->_arguments[0], "setenv") ) { // setenv
 	 		setenv(_simpleCommands[i]->_arguments[1], _simpleCommands[i]->_arguments[2], 1);
 			child = 1;
+			continue; //skip the rest of this iteration
 
 		} else { // else we fork!
 			child = fork();
 		}
 
+
+		/* --- post-fork --- */
 		if (child == 0) { //child process
 			signal(SIGINT, SIG_DFL); //reset SIGINT for great good
+
+			/*
+			if ( !strcmp(_simpleCommands[i]->_arguments[0], "printenv") ) {
+				int i;
+				while (environ[i]) {
+					printf("%s\n", environ[i]);
+					i++;
+				}
+				_exit(0);
+			}
+			*/
 			
+			TRACE("exec with %s\n", _simpleCommands[i]->_arguments[1]);
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
 			//if the child process reaches this point, execvp has failed
@@ -223,6 +240,9 @@ Command::execute()
 			exit(1);
 		}
 
+		if (!_background) {
+			waitpid(child, NULL, 0);
+		}
 	} // endfor
 
 	// restore in/out/err defaults
@@ -232,10 +252,6 @@ Command::execute()
 	close(tempIn);
 	close(tempOut);
 	close(tempErr);
-
-	if (!_background) {
-		waitpid(child, NULL, 0);
-	}
 
 	// Clear to prepare for next command
 	clear();
@@ -249,8 +265,10 @@ Command::execute()
 void
 Command::prompt()
 {
-	printf("myshell $ ");
-	fflush(stdout);
+	if (isatty(fileno(stdin))) {
+		printf("myshell $ ");
+		fflush(stdout);
+	}
 }
 
 Command Command::_currentCommand;
@@ -267,10 +285,9 @@ void sigint_handler(int sig) {
 void sigchild_handler(int sig) {
 	int status;
 	wait3(&status, 0, NULL);
-	printf("Child process ended status %x\n", status);
 }
 
-main()
+int main()
 {
 	struct sigaction sa_int;
 	sa_int.sa_handler = sigint_handler;
