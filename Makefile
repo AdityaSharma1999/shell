@@ -1,7 +1,7 @@
 
 #Use GNU compiler
-cc = gcc -g
-CC = g++ -g
+cc = gcc -g -DDEBUG -Wall
+CC = g++ -g -DDEBUG -Wall
 
 LEX=lex
 YACC=yacc
