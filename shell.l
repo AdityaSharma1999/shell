@@ -10,7 +10,7 @@
 %{
 
 #include <string.h>
-#include "y.tab.h"
+#include "shell.tab.h"
 
 static  void yyunput (int c,char *buf_ptr  );
 
@@ -37,6 +37,8 @@ void myunputc(int c) {
 "<"		{ return LESS; }
 "|" 	{ return PIPE; }
 "&" 	{ return AMPERSAND; }
+
+
 
 [^ \t\n][^ \t\n]*  {
 		/* Assume that file names have only alpha chars */

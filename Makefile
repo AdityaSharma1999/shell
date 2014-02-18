@@ -3,24 +3,24 @@
 cc = gcc -g -DDEBUG -Wall
 CC = g++ -g -DDEBUG -Wall
 
-LEX=lex
-YACC=yacc
+LEX=flex
+YACC=bison
 
-all: shell cat_grep ctrl-c regular
+all: shell 
 
 lex.yy.o: shell.l 
 	$(LEX) shell.l
 	$(CC) -c lex.yy.c
 
-y.tab.o: shell.y
+shell.tab.o: shell.y
 	$(YACC) -d shell.y
-	$(CC) -c y.tab.c
+	$(CC) -c shell.tab.c
 
 command.o: command.cc
 	$(CC) -c command.cc
 
-shell: y.tab.o lex.yy.o command.o
-	$(CC) -o shell lex.yy.o y.tab.o command.o -lfl
+shell: shell.tab.o lex.yy.o command.o
+	$(CC) -o shell lex.yy.o shell.tab.o command.o -lfl
 
 cat_grep: cat_grep.cc
 	$(CC) -o cat_grep cat_grep.cc
@@ -32,5 +32,5 @@ regular: regular.cc
 	$(CC) -o regular regular.cc 
 
 clean:
-	rm -f lex.yy.c y.tab.c  y.tab.h shell ctrl-c regular cat_grep *.o
+	rm -f lex.yy.c shell.tab.c  shell.tab.h shell ctrl-c regular cat_grep *.o
 

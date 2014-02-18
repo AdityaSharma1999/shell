@@ -31,22 +31,20 @@
 #include <stdlib.h>
 #include <string.h> // strcmp
 #include <unistd.h>
+
 #include "command.h"
 #include "trace.h"
 
 void yyerror(const char * s);
 int yylex();
 
-int compare (const void * a, const void * b) {
-	return strcmp( *(const char **)a, *(const char **) b);
-}
-
 void expandWildcard(char * prefix, char * suffix) {
 	TRACE("prefix: %s, suffix: %s\n", prefix, suffix);
 	if (suffix[0] == 0) {
 		// suffix is empty, put prefix in argument
 		TRACE("adding entry: %s\n", prefix);
-		Command::_currentSimpleCommand->insertArgument(strdup(prefix));
+		Command::_currentArgCollector->addArg(strdup(prefix));
+		//Command::_currentSimpleCommand->insertArgument(strdup(prefix));
 		return;
 	}
 
@@ -157,7 +155,7 @@ void expandWildcard(char * prefix, char * suffix) {
 		}
 	}
 }
-
+/*
 void expandWildcardsIfNecessary(char* arg) {
 	//return if arg does not contain '*' or '?'
  	if ( strchr(arg, '*') == NULL && strchr(arg, '?') == NULL ) {
@@ -247,6 +245,7 @@ void expandWildcardsIfNecessary(char* arg) {
 	}
 	free(array);
 }
+*/
 
 %}
 
@@ -302,6 +301,13 @@ argument:
 		//expandWildcardsIfNecessary($1);
 
 		expandWildcard(NULL, $1);
+		Command::_currentArgCollector->sortArgs();
+		int i;
+		for (i = 0; i < Command::_currentArgCollector->nArgs; i++) {
+			//add the sorted arguments
+			Command::_currentSimpleCommand->insertArgument(Command::_currentArgCollector->argArray[i]);
+		}
+		Command::_currentArgCollector->clear();
 	}
 	;
 
@@ -310,6 +316,8 @@ command_word:
 		TRACE("   Yacc: insert command \"%s\"\n", $1);
 
 	    Command::_currentSimpleCommand = new SimpleCommand();
+	    Command::_currentArgCollector = new ArgCollector();
+
 	    Command::_currentSimpleCommand->insertArgument( $1 );
 	}
 	;
