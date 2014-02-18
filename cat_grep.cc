@@ -21,7 +21,7 @@ const char * usage = ""
 const char *cat = "cat";
 const char *grep = "grep";
 
-main(int argc, char **argv, char **envp)
+int main(int argc, char **argv, char **envp)
 {
 	if (argc < 4) {
 		fprintf(stderr, "%s", usage );
