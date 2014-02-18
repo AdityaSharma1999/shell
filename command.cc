@@ -29,6 +29,7 @@ SimpleCommand::SimpleCommand()
 	_arguments = (char **) malloc( _numberOfAvailableArguments * sizeof( char * ) );
 }
 
+
 void
 SimpleCommand::insertArgument( char * argument )
 {
@@ -46,6 +47,50 @@ SimpleCommand::insertArgument( char * argument )
 	
 	_numberOfArguments++;
 }
+
+// ******** ArgCollector ********
+
+int compare (const void * a, const void * b) {
+	return strcmp( *(const char**)a, *(const char**)b);
+}
+
+ArgCollector::ArgCollector() {
+	//initialize
+	maxArgs = 5;
+	nArgs = 0;
+
+	argArray =  (char**)malloc(maxArgs * sizeof(char*));
+}
+
+void ArgCollector::addArg( char* arg ){
+	if ( maxArgs == nArgs ) {
+		//double available space
+		maxArgs *= 2;
+		if ( (argArray = (char**)realloc(argArray, maxArgs * sizeof(char*))) == NULL) {
+			perror("realloc arg buffer");
+			exit(1);
+		}
+	}
+
+	argArray[nArgs] = arg;
+	nArgs++;
+}
+
+void ArgCollector::sortArgs(){
+	qsort(argArray, nArgs, sizeof(const char *), compare);
+}
+
+void ArgCollector::clear(){
+	maxArgs = 5;
+	nArgs = 0;
+
+	free(argArray);
+
+	argArray =  (char**)malloc(maxArgs * sizeof(char*));
+}
+
+
+// ******** COMMAND ********
 
 Command::Command()
 {
@@ -208,7 +253,7 @@ Command::execute()
 			child = 1;
 			continue; //skip the rest of this iteration
 
-		} else { // else we fork!
+		} else { // else we sort the arguments and fork!
 			child = fork();
 		}
 
@@ -273,6 +318,7 @@ Command::prompt()
 
 Command Command::_currentCommand;
 SimpleCommand * Command::_currentSimpleCommand;
+ArgCollector  * Command::_currentArgCollector;
 
 int yyparse(void);
 
@@ -283,8 +329,7 @@ void sigint_handler(int sig) {
 }
 
 void sigchild_handler(int sig) {
-	int status;
-	wait3(&status, 0, NULL);
+	wait3(0, 0, NULL);
 }
 
 int main()
