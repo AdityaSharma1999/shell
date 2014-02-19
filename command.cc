@@ -9,14 +9,15 @@
  *
  */
 
+#include <fcntl.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <string.h>
 #include <sys/signal.h>
-#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include "command.h"
 #include "trace.h"
@@ -45,7 +46,35 @@ SimpleCommand::insertArgument( char * argument )
 				  _numberOfAvailableArguments * sizeof( char * ) );
 	}
 	
-	_arguments[ _numberOfArguments ] = argument;
+	// check for env variable to expand
+	const char * pattern = "\\${.*}";
+	regex_t preg;
+	regmatch_t match;
+	if ( regcomp(&preg, pattern, 0) ) {
+		perror("regex failed to compile");
+		exit(1);
+	}
+
+	if ( !regexec(&preg, argument, 1, &match, 0) ) {
+		// matches ${var}, must look up the var
+		//copy excluding '${' and '}'
+		char * var = (char*)calloc( 1, strlen(argument) * sizeof(char));
+
+		//find location of first '{'
+		char * start = strchr(argument, '{');
+		char * end = strchr(argument, '}');
+
+		strncat(var, start + 1, end - start - 1);
+		char* value = getenv(var);
+
+		_arguments[ _numberOfArguments ] = strdup(value);
+		free(var);
+
+	} else { // no match, just add the argument
+		_arguments[ _numberOfArguments ] = argument;
+	}
+
+	regfree(&preg);
 
 	// Add NULL argument at the end
 	_arguments[ _numberOfArguments + 1] = NULL;
@@ -254,6 +283,26 @@ Command::execute()
 		} else if ( !strcmp(_simpleCommands[i]->_arguments[0], "unsetenv") ) { // unsetenv
 			unsetenv(_simpleCommands[i]->_arguments[1]);
 			continue;
+
+		} else if ( !strcmp(_simpleCommands[i]->_arguments[0], "cd") ) { // cd
+			//call chdir
+			
+			//if no argument is specified, cd to $HOME
+			//otherwise cd to the specified path
+			int ret;
+			if ( _simpleCommands[i]->_numberOfArguments > 1 ) {
+				ret = chdir( _simpleCommands[i]->_arguments[1] );
+			} else {
+				ret = chdir( getenv("HOME") );
+			}
+
+			if (ret != 0) {
+				fprintf(stderr, "No such file or directory\n");
+			}
+
+
+			continue;
+
 
 		} else { // else we sort the arguments and fork!
 			child = fork();
