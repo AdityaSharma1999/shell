@@ -26,6 +26,8 @@ void myunputc(int c) {
 			return NEWLINE;
 	}
 
+";" { return NEWLINE; }
+
 [ \t] {
 			/* Discard spaces and tabs */
    	}	
