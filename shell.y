@@ -56,23 +56,19 @@ void expandWildcard(char * prefix, char * suffix) {
 	} else {
 		s = strchr(suffix, '/');
 	}
-	TRACE("s: %s\n", s);
 	char component[MAXFILENAME] = ""; // must initialize this
 	if ( s != NULL ) { // copy up to the first "/"
 		strncpy(component, suffix, s - suffix);
-		TRACE("after copy component: %s, s: %s, suffix: %s\n", component, s, suffix);
 		suffix = s + 1;
 	} else { // last part of path, copy the whole thing
 		strcpy(component, suffix);
 		suffix = suffix + strlen(suffix);
-		TRACE("after copy suffix: %s\n", suffix);
 	}
 
 	// expand the component
 	char newPrefix[MAXFILENAME];
  	if ( strchr(component, '*') == NULL && strchr(component, '?') == NULL ) {
 		// component has no wildcards
-		TRACE("no wildcard detected\n");
 
 		// only do this if prefix is empty
 		if ( prefix == NULL || prefix[0] == 0 ) {
@@ -80,6 +76,7 @@ void expandWildcard(char * prefix, char * suffix) {
 		} else {
 			sprintf(newPrefix, "%s/%s", prefix, component);
 		}
+
 		expandWildcard(newPrefix, suffix);
 		return;
 	}
@@ -116,12 +113,11 @@ void expandWildcard(char * prefix, char * suffix) {
 	regex_t re;
 	if ( regcomp(&re, reg, REG_EXTENDED|REG_NOSUB) != 0 ) {
 		perror("regcomp");
-		return;
+		exit(1);
 	}
 		
 	// if prefix is empty list current directory
 	char * dir_name;
-	//TRACE("Prefix: %s\n", prefix);
 	if ( prefix == NULL ) {
 		char * dot_char = ".";
 		dir_name = dot_char;
@@ -138,13 +134,11 @@ void expandWildcard(char * prefix, char * suffix) {
 	while ( (ent = readdir(dir)) != NULL ) {
 		//check if name matches
 		if (regexec(&re, ent->d_name, (size_t)0, NULL, 0) == 0) {
-			TRACE("prefix: %s, ent->d_name: %s\n", prefix, ent->d_name);
 			if (prefix == NULL || prefix[0] == 0) {
 				sprintf(newPrefix, "%s", ent->d_name);
 			} else {
 				sprintf(newPrefix, "%s/%s", prefix, ent->d_name);
 			}
-			TRACE("expanded wildcard to %s <--- %s, %s\n", newPrefix, suffix, component);
 			if (ent->d_name[0] == '.') { // only add things beginning with . if regex also begins with .
 				if (component[0] == '.') {
 					expandWildcard(newPrefix, suffix);
@@ -174,7 +168,7 @@ command: simple_command
 
 simple_command:	
 	pipe_list iomodifier_list background_opt NEWLINE {
-		//TRACE("   Yacc: Execute command\n");
+		TRACE("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
 	| NEWLINE { 
