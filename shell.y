@@ -39,10 +39,10 @@ void yyerror(const char * s);
 int yylex();
 
 void expandWildcard(char * prefix, char * suffix) {
-	TRACE("prefix: %s, suffix: %s\n", prefix, suffix);
+	//TRACE("prefix: %s, suffix: %s\n", prefix, suffix);
 	if (suffix[0] == 0) {
 		// suffix is empty, put prefix in argument
-		TRACE("adding entry: %s\n", prefix);
+		//TRACE("adding entry: %s\n", prefix);
 		Command::_currentArgCollector->addArg(strdup(prefix));
 		//Command::_currentSimpleCommand->insertArgument(strdup(prefix));
 		return;
@@ -81,7 +81,7 @@ void expandWildcard(char * prefix, char * suffix) {
 		return;
 	}
 
-	TRACE("expanding wildcard in %s\n", component);
+	//TRACE("expanding wildcard in %s\n", component);
 	// component has wildcards, convert it to regex
 	// allocate enough space for regex
 	char * reg = (char*)malloc(2*strlen(component)+10);	
@@ -168,7 +168,7 @@ command: simple_command
 
 simple_command:	
 	pipe_list iomodifier_list background_opt NEWLINE {
-		TRACE("   Yacc: Execute command\n");
+		//TRACE("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
 	| NEWLINE { 
@@ -200,7 +200,7 @@ arg_list:
 
 argument:
 	WORD {
-		TRACE("   Yacc: insert argument \"%s\"\n", $1);
+		//TRACE("   Yacc: insert argument \"%s\"\n", $1);
 		//expandWildcardsIfNecessary($1);
 
 		expandWildcard(NULL, $1);
@@ -216,7 +216,7 @@ argument:
 
 command_word:
 	WORD {
-		TRACE("   Yacc: insert command \"%s\"\n", $1);
+		//TRACE("   Yacc: insert command \"%s\"\n", $1);
 
 	    Command::_currentSimpleCommand = new SimpleCommand();
 	    Command::_currentArgCollector = new ArgCollector();

@@ -64,14 +64,14 @@ SimpleCommand::insertArgument( char * argument )
 		int i = 0; // position in argument
 		int m = 0; // position in expandedArg
 		while(argument[i] != 0 && i < MAXARGLENGTH ) {
-			TRACE("i: %d, m: %d\n", i, m);
+			//TRACE("i: %d, m: %d\n", i, m);
 			if ( argument[i] != '$' ) { // as long as we havent encountered the var
-				TRACE("adding char %c at position %d, m: %d\n", argument[i], i, m);
+				//TRACE("adding char %c at position %d, m: %d\n", argument[i], i, m);
 
 				expandedArg[m] = argument[i];
 				expandedArg[m + 1] = '\0';  //null terminator
 
-				TRACE("expandedArg: %s, len: %d\n", expandedArg, strlen(expandedArg));
+				//TRACE("expandedArg: %s, len: %d\n", expandedArg, strlen(expandedArg));
 
 				i++;
 				m++;
@@ -85,11 +85,11 @@ SimpleCommand::insertArgument( char * argument )
 				// we want to be excluding '${' and '}'
 				char * var = (char*)calloc( 1, strlen(argument) * sizeof(char));
 				strncat(var, start + 1, end - start - 1);
-				TRACE("var: %s\n", var);
+				//TRACE("var: %s\n", var);
 
 				// get the value
 				char* value = getenv(var);
-				TRACE("value: %s\n", value);
+				//TRACE("value: %s\n", value);
 				
 				if (value == NULL) { //nullcheck
 					strcat(expandedArg, "");
@@ -103,21 +103,9 @@ SimpleCommand::insertArgument( char * argument )
 				m += strlen(value);
 				free(var);
 			}
-
-			/*
-			unsigned int t;
-			for (t = 0; t < 64; t++) {
-				if (expandedArg[t] == '\0') {
-					TRACE("*");
-				} else {
-					TRACE("%c", expandedArg[t]);
-				}
-			}
-			TRACE("\n");
-			*/
 		}
 
-		TRACE("expandedArg: %s\n", expandedArg);
+		//TRACE("expandedArg: %s\n", expandedArg);
 
 		_arguments[ _numberOfArguments ] = strdup(expandedArg);
 
@@ -366,7 +354,7 @@ Command::execute()
 		if (child == 0) { //child process
 			signal(SIGINT, SIG_DFL); //reset SIGINT for great good
 
-			TRACE("exec with %s\n", _simpleCommands[i]->_arguments[1]);
+			//TRACE("exec with %s\n", _simpleCommands[i]->_arguments[1]);
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
 			//if the child process reaches this point, execvp has failed
