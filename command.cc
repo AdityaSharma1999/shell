@@ -56,19 +56,72 @@ SimpleCommand::insertArgument( char * argument )
 	}
 
 	if ( !regexec(&preg, argument, 1, &match, 0) ) {
-		// matches ${var}, must look up the var
-		//copy excluding '${' and '}'
-		char * var = (char*)calloc( 1, strlen(argument) * sizeof(char));
+		// matches ${var}, must look up at least one var
+		const unsigned int MAXARGLENGTH = 1024;
+		char * expandedArg = (char*)calloc(1, MAXARGLENGTH * sizeof(char));
+		
+		// start copying non $ characters in the string
+		int i = 0; // position in argument
+		int m = 0; // position in expandedArg
+		while(argument[i] != 0 && i < MAXARGLENGTH ) {
+			TRACE("i: %d, m: %d\n", i, m);
+			if ( argument[i] != '$' ) { // as long as we havent encountered the var
+				TRACE("adding char %c at position %d, m: %d\n", argument[i], i, m);
 
-		//find location of first '{'
-		char * start = strchr(argument, '{');
-		char * end = strchr(argument, '}');
+				expandedArg[m] = argument[i];
+				expandedArg[m + 1] = '\0';  //null terminator
 
-		strncat(var, start + 1, end - start - 1);
-		char* value = getenv(var);
+				TRACE("expandedArg: %s, len: %d\n", expandedArg, strlen(expandedArg));
 
-		_arguments[ _numberOfArguments ] = strdup(value);
-		free(var);
+				i++;
+				m++;
+
+			} else { // argument[i] == '$', we must expand the variable
+				// find location of next '{' and '}' from where we are
+				char * start = strchr((char*)(argument + i), '{');
+				char * end = strchr((char*)(argument + i), '}');
+
+				// copy the environment var to expand, 
+				// we want to be excluding '${' and '}'
+				char * var = (char*)calloc( 1, strlen(argument) * sizeof(char));
+				strncat(var, start + 1, end - start - 1);
+				TRACE("var: %s\n", var);
+
+				// get the value
+				char* value = getenv(var);
+				TRACE("value: %s\n", value);
+				
+				if (value == NULL) { //nullcheck
+					strcat(expandedArg, "");
+				} else {
+					// add the variable's value to our expanded string
+					strcat(expandedArg, value);
+				}
+
+				//increment length of var + '${' and '}'
+				i += strlen(var) + 3;
+				m += strlen(value);
+				free(var);
+			}
+
+			/*
+			unsigned int t;
+			for (t = 0; t < 64; t++) {
+				if (expandedArg[t] == '\0') {
+					TRACE("*");
+				} else {
+					TRACE("%c", expandedArg[t]);
+				}
+			}
+			TRACE("\n");
+			*/
+		}
+
+		TRACE("expandedArg: %s\n", expandedArg);
+
+		_arguments[ _numberOfArguments ] = strdup(expandedArg);
+
+
 
 	} else { // no match, just add the argument
 		_arguments[ _numberOfArguments ] = argument;
