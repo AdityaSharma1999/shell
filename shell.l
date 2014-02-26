@@ -22,15 +22,10 @@ void myunputc(int c) {
 
 %%
 
-\n  {
-			return NEWLINE;
-	}
+\n  	{ return NEWLINE; }
+";" 	{ return NEWLINE; }
 
-";" { return NEWLINE; }
-
-[ \t] {
-			/* Discard spaces and tabs */
-   	}	
+[ \t] 	{	/* Discard spaces and tabs */ }	
 
 ">"		{ return GREAT; }
 ">>"	{ return GREATGREAT; }
@@ -40,7 +35,15 @@ void myunputc(int c) {
 "|" 	{ return PIPE; }
 "&" 	{ return AMPERSAND; }
 
+\"[^\n\"]*\" {
+		/* handle arguments in quotes by stripping the quotes */
 
+		yytext = (char*)(yytext+1); // drop the front quotes
+		yytext[ strlen(yytext) - 1 ] = '\0'; // drop the end quotes
+
+		yylval.string_val = strdup(yytext);
+		return WORD;
+	}
 
 [^ \t\n][^ \t\n]*  {
 		/* Assume that file names have only alpha chars */
