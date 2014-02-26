@@ -191,13 +191,18 @@ arg_list:
 
 argument:
 	WORD {
+		// expand wildcards
 		expandWildcard(NULL, $1);
+
+		// sort the arguments
 		Command::_currentArgCollector->sortArgs();
 		int i;
 		for (i = 0; i < Command::_currentArgCollector->nArgs; i++) {
-			//add the sorted arguments
+			//add all the sorted arguments
 			Command::_currentSimpleCommand->insertArgument(Command::_currentArgCollector->argArray[i]);
 		}
+		
+		// reset the argCollector
 		Command::_currentArgCollector->clear();
 	}
 	;

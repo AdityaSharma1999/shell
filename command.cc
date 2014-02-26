@@ -54,9 +54,9 @@ SimpleCommand::insertArgument( char * argument )
 		perror("regex failed to compile");
 		exit(1);
 	}
-
+	
 	if ( !regexec(&preg, argument, 1, &match, 0) ) {
-		// matches ${var}, must look up at least one var
+		// regex matched ${var}, must look up at least one var
 		const unsigned int MAXARGLENGTH = 1024;
 		char * expandedArg = (char*)calloc(1, MAXARGLENGTH * sizeof(char));
 		
@@ -64,14 +64,9 @@ SimpleCommand::insertArgument( char * argument )
 		int i = 0; // position in argument
 		int m = 0; // position in expandedArg
 		while(argument[i] != 0 && i < MAXARGLENGTH ) {
-			//TRACE("i: %d, m: %d\n", i, m);
 			if ( argument[i] != '$' ) { // as long as we havent encountered the var
-				//TRACE("adding char %c at position %d, m: %d\n", argument[i], i, m);
-
 				expandedArg[m] = argument[i];
 				expandedArg[m + 1] = '\0';  //null terminator
-
-				//TRACE("expandedArg: %s, len: %d\n", expandedArg, strlen(expandedArg));
 
 				i++;
 				m++;
@@ -85,12 +80,10 @@ SimpleCommand::insertArgument( char * argument )
 				// we want to be excluding '${' and '}'
 				char * var = (char*)calloc( 1, strlen(argument) * sizeof(char));
 				strncat(var, start + 1, end - start - 1);
-				//TRACE("var: %s\n", var);
 
 				// get the value
 				char* value = getenv(var);
-				//TRACE("value: %s\n", value);
-				
+
 				if (value == NULL) { //nullcheck
 					strcat(expandedArg, "");
 				} else {
@@ -105,34 +98,33 @@ SimpleCommand::insertArgument( char * argument )
 			}
 		}
 
-		//TRACE("expandedArg: %s\n", expandedArg);
-
 		_arguments[ _numberOfArguments ] = strdup(expandedArg);
-
-
 
 	} else { // no match, just add the argument
 		_arguments[ _numberOfArguments ] = argument;
 	}
 
+	// free the regex
 	regfree(&preg);
 
 	// Add NULL argument at the end
 	_arguments[ _numberOfArguments + 1] = NULL;
-	
 	_numberOfArguments++;
 }
 
 // ******** ArgCollector ********
+// collects arguments from wildcard expansion
+// sorts, and finally we add them to the simpleCommand
 
+// initialize
 ArgCollector::ArgCollector() {
-	//initialize
 	maxArgs = 5;
 	nArgs = 0;
 
 	argArray =  (char**)malloc(maxArgs * sizeof(char*));
 }
 
+// add argument to resizable array
 void ArgCollector::addArg( char* arg ){
 	if ( maxArgs == nArgs ) {
 		//double available space
@@ -151,6 +143,7 @@ int compare (const void * a, const void * b) {
 	return strcmp( *(const char**)a, *(const char**)b);
 }
 
+// sort the arguments
 void ArgCollector::sortArgs(){
 	qsort(argArray, nArgs, sizeof(const char *), compare);
 }
@@ -264,9 +257,6 @@ Command::execute()
 		printf("Ambiguous output redirect.\n");
 	}
 
-	// Print contents of Command data structure
-	//print();
-	
 	// save stdin / stdout / stderr
 	int tempIn = dup(0);
 	int tempOut = dup(1);
@@ -341,9 +331,7 @@ Command::execute()
 				fprintf(stderr, "No such file or directory\n");
 			}
 
-
 			continue;
-
 
 		} else { // else we sort the arguments and fork!
 			child = fork();
@@ -353,8 +341,6 @@ Command::execute()
 		/* --- post-fork --- */
 		if (child == 0) { //child process
 			signal(SIGINT, SIG_DFL); //reset SIGINT for great good
-
-			//TRACE("exec with %s\n", _simpleCommands[i]->_arguments[1]);
 			execvp(_simpleCommands[i]->_arguments[0], _simpleCommands[i]->_arguments);
 
 			//if the child process reaches this point, execvp has failed
@@ -387,7 +373,6 @@ Command::execute()
 }
 
 // Shell implementation
-
 void
 Command::prompt()
 {
@@ -415,24 +400,23 @@ void sigchild_handler(int sig) {
 
 int main()
 {
+	// set the SIGINT handler
 	struct sigaction sa_int;
 	sa_int.sa_handler = sigint_handler;
 	sa_int.sa_flags = SA_RESTART; //restart any interrupted system calls
 	sigemptyset(&sa_int.sa_mask);
-
-	//set the SIGINT handler
 	if (sigaction(SIGINT, &sa_int, NULL) == -1) {
 		perror("sigint action");
 		exit(1);
 	}
 
+	// set the SIGCHILD handler
 	struct sigaction sa_child;
 	sa_child.sa_handler = sigchild_handler;
 	sa_child.sa_flags = SA_RESTART;
 	sigemptyset(&sa_child.sa_mask);
-
 	if (sigaction(SIGCHLD, &sa_child, NULL) == -1) {
-		perror ("sig child action");
+		perror ("sigchild action");
 	}
 
 	Command::_currentCommand.prompt();
