@@ -39,12 +39,9 @@ void yyerror(const char * s);
 int yylex();
 
 void expandWildcard(char * prefix, char * suffix) {
-	//TRACE("prefix: %s, suffix: %s\n", prefix, suffix);
 	if (suffix[0] == 0) {
 		// suffix is empty, put prefix in argument
-		//TRACE("adding entry: %s\n", prefix);
 		Command::_currentArgCollector->addArg(strdup(prefix));
-		//Command::_currentSimpleCommand->insertArgument(strdup(prefix));
 		return;
 	}
 
@@ -81,13 +78,13 @@ void expandWildcard(char * prefix, char * suffix) {
 		return;
 	}
 
-	//TRACE("expanding wildcard in %s\n", component);
 	// component has wildcards, convert it to regex
 	// allocate enough space for regex
 	char * reg = (char*)malloc(2*strlen(component)+10);	
 	char * a = component;
 	char * r = reg;
 
+	// copy over all characters, converting to regex representation
 	*r = '^';  r++;
 	while (*a) {
 		if ( *a == '*' ) { // * -> .*
@@ -125,6 +122,7 @@ void expandWildcard(char * prefix, char * suffix) {
 		dir_name = prefix;
 	}
 	
+	// open the directory
 	DIR * dir = opendir(dir_name);
 	if (dir == NULL) {
 		return;
@@ -139,7 +137,7 @@ void expandWildcard(char * prefix, char * suffix) {
 			} else {
 				sprintf(newPrefix, "%s/%s", prefix, ent->d_name);
 			}
-			if (ent->d_name[0] == '.') { // only add things beginning with . if regex also begins with .
+			if (ent->d_name[0] == '.') { // only add items beginning with . if regex also begins with .
 				if (component[0] == '.') {
 					expandWildcard(newPrefix, suffix);
 				}
@@ -165,7 +163,6 @@ commands:
 
 command: 
 	pipe_list iomodifier_list background_opt NEWLINE {
-		//TRACE("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
 	}
 	| NEWLINE { 
@@ -194,8 +191,6 @@ arg_list:
 
 argument:
 	WORD {
-		//TRACE("   Yacc: insert argument \"%s\"\n", $1);
-
 		expandWildcard(NULL, $1);
 		Command::_currentArgCollector->sortArgs();
 		int i;
@@ -209,8 +204,6 @@ argument:
 
 command_word:
 	WORD {
-		//TRACE("   Yacc: insert command \"%s\"\n", $1);
-
 	    Command::_currentSimpleCommand = new SimpleCommand();
 	    Command::_currentArgCollector = new ArgCollector();
 
