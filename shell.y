@@ -24,7 +24,7 @@
 //#define yylex yylex
 #define MAXFILENAME 1024
 
-#include <dirent.h> //wildcard expansion directory stuff
+#include <dirent.h> // wildcard expansion directory stuff
 #include <fcntl.h> // open() arguments
 #include <regex.h>
 #include <stdio.h>
@@ -163,10 +163,7 @@ commands:
 	| commands command 
 	;
 
-command: simple_command
-        ;
-
-simple_command:	
+command: 
 	pipe_list iomodifier_list background_opt NEWLINE {
 		//TRACE("   Yacc: Execute command\n");
 		Command::_currentCommand.execute();
@@ -179,11 +176,8 @@ simple_command:
 	;
 
 pipe_list:
-	pipe_list PIPE {
-	} command_and_args {
-	}
-	| command_and_args { 
-	}
+	pipe_list PIPE command_and_args 
+	| command_and_args 
 	;
 
 
@@ -201,7 +195,6 @@ arg_list:
 argument:
 	WORD {
 		//TRACE("   Yacc: insert argument \"%s\"\n", $1);
-		//expandWildcardsIfNecessary($1);
 
 		expandWildcard(NULL, $1);
 		Command::_currentArgCollector->sortArgs();
