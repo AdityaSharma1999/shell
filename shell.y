@@ -173,13 +173,16 @@ command:
 	;
 
 pipe_list:
-	pipe_list PIPE command_and_args 
+	pipe_list PIPE {
+		TRACE("found pipe\n");
+	} command_and_args 
 	| command_and_args 
 	;
 
 
 command_and_args:
 	command_word arg_list {
+		//TRACE("adding command: %s\n", Command::_currentSimpleCommand->Command );
 		Command::_currentCommand.insertSimpleCommand( Command::_currentSimpleCommand );
 	}
 	;
@@ -199,6 +202,7 @@ argument:
 		int i;
 		for (i = 0; i < Command::_currentArgCollector->nArgs; i++) {
 			//add all the sorted arguments
+			TRACE("adding argument %s\n", Command::_currentArgCollector->argArray[i]);
 			Command::_currentSimpleCommand->insertArgument(Command::_currentArgCollector->argArray[i]);
 		}
 		
@@ -212,6 +216,7 @@ command_word:
 	    Command::_currentSimpleCommand = new SimpleCommand();
 	    Command::_currentArgCollector = new ArgCollector();
 
+		TRACE("inserting argument %s\n", $1);
 	    Command::_currentSimpleCommand->insertArgument( $1 );
 	}
 	;

@@ -10,6 +10,7 @@
  */
 
 #include <fcntl.h>
+#include <pwd.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +46,10 @@ SimpleCommand::insertArgument( char * argument )
 		_arguments = (char **) realloc( _arguments,
 				  _numberOfAvailableArguments * sizeof( char * ) );
 	}
+
+	// check for ` marks for subshell expansion.
+	//if ( argument[0] = '`' ) {
+ 		
 	
 	// check for env variable to expand
 	const char * pattern = "\\${.*}";
@@ -55,6 +60,7 @@ SimpleCommand::insertArgument( char * argument )
 		exit(1);
 	}
 	
+	// expand a variable!
 	if ( !regexec(&preg, argument, 1, &match, 0) ) {
 		// regex matched ${var}, must look up at least one var
 		const unsigned int MAXARGLENGTH = 1024;
@@ -98,15 +104,30 @@ SimpleCommand::insertArgument( char * argument )
 			}
 		}
 
-		_arguments[ _numberOfArguments ] = strdup(expandedArg);
+		argument = strdup(expandedArg);
+	}
 
-	} else { // no match, just add the argument
-		_arguments[ _numberOfArguments ] = argument;
+	// check for tilde to expand
+	if (argument[0] == '~') {
+		struct passwd *pw = getpwuid(getuid());
+		const char *homedir = pw->pw_dir;
+
+		// allocate space for expanding the tilde + the original argument
+		char * newArg = (char *)malloc( (strlen(homedir) + strlen(argument))*sizeof(char) );
+		newArg[0] = '\0';
+		strcat( newArg, homedir );
+		strcat( newArg, "/" );
+		strcat( newArg, (char *)(argument + 1) );
+		TRACE("new argument: %s\n", newArg);
+
+		argument = newArg;
 	}
 
 	// free the regex
 	regfree(&preg);
 
+	// add the argument
+	_arguments[ _numberOfArguments ] = argument;
 	// Add NULL argument at the end
 	_arguments[ _numberOfArguments + 1] = NULL;
 	_numberOfArguments++;

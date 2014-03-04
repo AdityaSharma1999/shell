@@ -9,14 +9,18 @@
 
 %{
 
+#include <regex.h>
 #include <string.h>
-#include "shell.tab.h"
 
-static  void yyunput (int c,char *buf_ptr  );
+#include "shell.tab.h"
+#include "trace.h"
+
+static void yyunput (int c, char *buf_ptr);
 
 void myunputc(int c) {
     unput(c);
 }
+
 
 %}
 
@@ -35,6 +39,15 @@ void myunputc(int c) {
 "|" 	{ return PIPE; }
 "&" 	{ return AMPERSAND; }
 
+
+\`[^\n\`]*\` {
+		// handle ` marks for subshell expansion...
+		// don't strip anything, we'll check for ` in command.cc
+		// return it all as one word
+		yylval.string_val = strdup(yytext);
+		return WORD;
+}
+
 \"[^\n\"]*\" {
 		/* handle arguments in quotes by stripping the quotes */
 
@@ -46,10 +59,56 @@ void myunputc(int c) {
 	}
 
 [^ \t\n][^ \t\n]*  {
-		/* Assume that file names have only alpha chars */
+
+		//create regex
+		regex_t preg;
+		regmatch_t match;
+		const char * pattern = "[>|<|\|]"; // match >, <, or |
+		if ( regcomp(&preg, pattern, 0) ) {
+			perror ("regex failed to compile");
+			exit(1);
+		}
+
+		// if we encounter > or |, unput all the characters in reverse order
+		if ( !regexec(&preg, yytext, 1, &match, 0) ) {
+			TRACE("preg = %d\n", match.rm_so);
+
+			char * temp = (char*)malloc( strlen(yytext) * sizeof(char) );
+			temp[0] = '\0'; // add a null terminator
+			// copy until our special character
+			strncat( temp, yytext, match.rm_so * sizeof(char) ); 
+			TRACE("temp: %s\n", temp);
+
+			int i;
+			int m = 0;
+			// iterate backwards until we reach the regex'd character
+			for ( i = strlen(yytext) - 1; i >= match.rm_so; i-- ) {
+
+				TRACE("i: %d, m: %d\n", i, m);
+
+				if ( i == match.rm_so ) {
+					char c = yytext[i];
+					TRACE("unputting space\n");
+					myunputc(' ');
+					TRACE("unputting %c\n", c);
+					myunputc(c);
+				} else {
+					TRACE("unputting %c\n", yytext[i]);
+					myunputc(yytext[i]);
+				}
+
+				m++;
+				if (m > 10) { 
+					TRACE("exit because lol\n");
+					exit(1); 
+				} // loooop
+			}
+			yytext = temp;
+		}
+
 		yylval.string_val = strdup(yytext);
 		return WORD;
 	}
 
-
+%%
 
