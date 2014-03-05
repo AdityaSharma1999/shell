@@ -47,10 +47,6 @@ SimpleCommand::insertArgument( char * argument )
 				  _numberOfAvailableArguments * sizeof( char * ) );
 	}
 
-	// check for ` marks for subshell expansion.
-	//if ( argument[0] = '`' ) {
- 		
-	
 	// check for env variable to expand
 	const char * pattern = "\\${.*}";
 	regex_t preg;
