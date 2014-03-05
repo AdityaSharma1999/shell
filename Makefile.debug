@@ -1,6 +1,7 @@
+
 #Use GNU compiler
-cc = gcc -g -Wall
-CC = g++ -g -Wall
+cc = gcc -g -DDEBUG -Wall
+CC = g++ -g -DDEBUG -Wall
 
 LEX=flex
 YACC=bison
@@ -18,6 +19,9 @@ shell.tab.o: shell.y
 command.o: command.cc
 	$(CC) -c command.cc
 
+shell: shell.tab.o lex.yy.o command.o
+	$(CC) -o shell lex.yy.o shell.tab.o command.o -lfl
+
 tty-raw-mode.o: tty-raw-mode.c
 	gcc -c tty-raw-mode.c
 
@@ -29,4 +33,3 @@ shell: shell.tab.o lex.yy.o command.o
 
 clean:
 	rm -f lex.yy.c shell.tab.c  shell.tab.h shell *.o
-
