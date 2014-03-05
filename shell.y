@@ -116,8 +116,8 @@ void expandWildcard(char * prefix, char * suffix) {
 	// if prefix is empty list current directory
 	char * dir_name;
 	if ( prefix == NULL ) {
-		char * dot_char = ".";
-		dir_name = dot_char;
+		const char * dot_char = ".";
+		dir_name = strdup(dot_char);
 	} else {
 		dir_name = prefix;
 	}
