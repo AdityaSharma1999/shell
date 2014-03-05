@@ -39,14 +39,38 @@ void myunputc(int c) {
 "|" 	{ return PIPE; }
 "&" 	{ return AMPERSAND; }
 
-
+		/*
 \`[^\n\`]*\` {
 		// handle ` marks for subshell expansion...
-		// don't strip anything, we'll check for ` in command.cc
-		// return it all as one word
+		char * subs = strdup(yytext + 1); 	// drop the front tic
+		subs[ strlen(subs) - 1] = '\0'; 	// drop the end tick
+
+		// put subs into a buffer
+
+		// redirect stdin of child to read from subs buffer
+		// redirect stdout of child to unput into original stdin of parent
+
+		// fork
+
+
+
+
+		pid_t child;
+
+		child = fork();
+
+		if ( child == 0 ) {
+			// set stdout to the pipe
+
+			// call main
+			main();
+		}
+
+
 		yylval.string_val = strdup(yytext);
 		return WORD;
 }
+		*/
 
 \"[^\n\"]*\" {
 		/* handle arguments in quotes by stripping the quotes */
