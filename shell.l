@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-//#include "read-line.c"
+#include "read-line.h"
 #include "shell.tab.h"
 #include "trace.h"
 
@@ -24,7 +24,6 @@ void myunputc(int c) {
 }
 
 // code for readline 
-extern "C" char * read_line();
 
 int mygetc( FILE * f ) {
 	static char *p;

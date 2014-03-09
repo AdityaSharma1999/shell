@@ -4,6 +4,8 @@
 #include <termios.h>
 #include <string.h>
 
+#include "read-line.h"
+
 /* 
  * Sets terminal into raw mode. 
  * This causes having the characters available
