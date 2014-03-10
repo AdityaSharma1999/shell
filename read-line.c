@@ -26,7 +26,6 @@ int history_length = 0;
 int history_index = 0;
 char ** history = NULL; 
 
-
 // add an entry
 void add_hist_line( const char * input ) {
 	char * line = strdup(input);
@@ -165,7 +164,6 @@ char * read_line() {
 				add_hist_line(line_buffer);
 			}
 
-
 			// Print newline
 			write(1,&ch,1);
 
@@ -179,6 +177,11 @@ char * read_line() {
 		}
 		else if (ch == 127) {
 			// <backspace> was typed. Remove previous character read.
+
+			// don't do anything if we're already at the beginning 
+			if (line_pos <= 0) {
+				continue;
+			}
 
 			// Go back one character
 			backspace(1);
